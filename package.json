@@ -1,0 +1,18 @@
+{
+  "name": "fivem-danish-server-scanner",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Exports Danish FiveM servers from the public Cfx.re directory to CSV.",
+  "main": "scanner.cjs",
+  "scripts": {
+    "scan": "node scanner.cjs",
+    "sync": "node scanner.cjs --resource flaxhosting_filer --endpoint auto --output targets.csv && node push-targets.cjs targets.csv",
+    "test": "node --test test/*.test.cjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "protobufjs": "8.7.2"
+  }
+}
