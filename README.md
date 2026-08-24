@@ -35,10 +35,10 @@ scan downloads a roughly 20 MB directory and checks hundreds of Danish server
 records, so one Free Worker invocation cannot complete it reliably.
 
 Standard GitHub-hosted Actions runners are currently free for public
-repositories. This workflow runs daily for a few seconds, but the committed
-`.sync-state.json` permits a real scan/replacement only after 72 hours. The
-successful state commit also creates repository activity, preventing GitHub's
-60-day inactivity shutdown for public scheduled workflows.
+repositories. This workflow makes a lightweight due-time check every six hours,
+but the committed `.sync-state.json` permits a real scan/replacement only after
+72 hours. The successful state commit also creates repository activity,
+preventing GitHub's 60-day inactivity shutdown for public scheduled workflows.
 
 Platform policies can change in the future, so no third-party service can be
 promised to be free forever. This design uses no paid feature and stays within
@@ -51,7 +51,22 @@ References:
 - <https://docs.github.com/en/actions/concepts/billing-and-usage>
 - <https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows>
 
-## One-time Cloudflare update
+## Hosted deployment
+
+The service is deployed at:
+
+<https://fivem-warning-preferences.baremelonen09.workers.dev>
+
+The source runner is hosted at:
+
+<https://github.com/BareMelon/fivem-flax-target-sync>
+
+Its D1 database is restricted to the EU. The admin and auditor keys are stored
+as Cloudflare/GitHub secrets and were never printed or committed. The first
+production workflow completed successfully on 24 August 2026 and replaced the
+inventory with the current verified count of zero targets.
+
+## Empty-inventory support
 
 The existing preference/inventory Worker has been updated to accept an empty
 full replacement only when this additional header is present:
@@ -65,8 +80,8 @@ servers. Without the guarded empty replacement, stale non-matching rows would
 remain in D1. Normal manual uploads that accidentally contain no rows are still
 rejected.
 
-From the existing `fivem-preference-service` project, run its tests and deploy
-the updated Worker once:
+The updated `fivem-preference-service` source remains the deployment source. To
+redeploy it after a future code change, run:
 
 ```powershell
 npm install
@@ -74,27 +89,22 @@ npm run check
 npx wrangler deploy
 ```
 
-Do not create a new D1 database. Keep the existing `database_id`,
+Do not create another D1 database. Keep the existing `database_id`,
 `ADMIN_API_KEY`, and `AUDITOR_API_KEY`, so the current auditor remains attached
 to the same service and data.
 
-## Put this runner on GitHub
+## GitHub configuration
 
-1. Create a public GitHub repository and copy this folder's contents to its
-   root. The `.github/workflows/sync-flax-targets.yml` file must remain in that
-   exact location.
-2. In **Settings > Secrets and variables > Actions**, add these repository
-   secrets:
+The public repository already contains the workflow and these Actions secrets:
 
-   - `FIVEM_AUDITOR_SERVICE_URL` — for example,
-     `https://YOUR-WORKER.workers.dev`
-   - `FIVEM_AUDITOR_ADMIN_KEY` — the existing Worker's admin key
+- `FIVEM_AUDITOR_SERVICE_URL`
+- `FIVEM_AUDITOR_ADMIN_KEY`
+- `FIVEM_AUDITOR_API_KEY`
 
-3. In **Settings > Actions > General > Workflow permissions**, allow workflows
-   to read and write repository contents. The workflow needs this only to
-   commit the last successful sync timestamp.
-4. Open **Actions > Sync flaxhosting_filer FiveM targets** and choose
-   **Run workflow** once. Manual runs ignore the 72-hour timer.
+The workflow has repository-content write permission only so it can commit the
+last successful sync timestamp. Open **Actions > Sync flaxhosting_filer FiveM
+targets** and choose **Run workflow** for an extra manual run; manual runs ignore
+the 72-hour timer.
 
 The secrets are sent only to the Cloudflare management endpoint. They are not
 stored in the CSV, committed state, or logs. The workflow has no pull-request
